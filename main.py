@@ -79,6 +79,8 @@ def main():
 	print("Started program")
 	data = Data(API_KEY, PROJECT_TOKEN) 
 	END_PHRASE='stop'
+	country_list = list(data.get_list_of_countries())
+
 
 	TOTAL_PATTERNS={
 					re.compile('[\w\s]+ total [\w\s]+ cases'): data.get_total_cases,	
@@ -87,11 +89,19 @@ def main():
 					re.compile('[\w\s]+ total deaths'): data.get_total_deaths
 					}
 
+	COUNTRY_PATTERNS={
+					re.compile("[\w\s]+ cases [\w\s]+"): lambda country: data.get_country_data(country)['total_cases'], # lambda bierze jedną zmienną z countries
+                    re.compile("[\w\s]+ deaths [\w\s]+"): lambda country: data.get_country_data(country)['total_deaths'],
+					 }
+
 	while True:
 		print("Listening...")
 		text = get_audio()
 		print(text)
 		result = None
+
+
+
 
 		for pattern, func in TOTAL_PATTERNS.items():
 			if pattern.match(text):
@@ -100,8 +110,9 @@ def main():
 
 		if result:
 			speak(result)
+			print(result)
 
-		if text.find(END_PHRASE): # stop loop
+		if text.find(END_PHRASE) != -1: # stop loop
 			print("Exit")
 			break
 
