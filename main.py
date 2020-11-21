@@ -67,7 +67,7 @@ def get_audio():
 		said = ""
 
 		try: 
-			said = r.recognize_google(audio, language="pl-PL")
+			said = r.recognize_google(audio)
 		except Exception as e:
 			print('Exception:', str(e))
 	
@@ -90,7 +90,7 @@ def main():
 					}
 
 	COUNTRY_PATTERNS={
-					re.compile("[\w\s]+ cases [\w\s]+"): lambda country: data.get_country_data(country)['total_cases'], # lambda bierze jedną zmienną z countries
+					re.compile("country+"): lambda country: data.get_country_data(country)['total_cases'], # lambda bierze jedną zmienną z countries
                     re.compile("[\w\s]+ deaths [\w\s]+"): lambda country: data.get_country_data(country)['total_deaths'],
 					 }
 
@@ -100,7 +100,13 @@ def main():
 		print(text)
 		result = None
 
-
+		for pattern, func in COUNTRY_PATTERNS.items():
+			if pattern.match(text):
+				words = set(text.split(" "))
+				for country in country_list:
+					if country in words:
+						result = func(country)
+						break
 
 
 		for pattern, func in TOTAL_PATTERNS.items():

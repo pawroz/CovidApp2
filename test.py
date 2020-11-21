@@ -26,3 +26,8 @@
 # 		result=None
 
 # main()
+
+words = "test1 test2 test3"
+print(words)
+words2 = set(words.split(" "))
+print(words2)
