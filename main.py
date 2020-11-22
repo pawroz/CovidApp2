@@ -3,7 +3,8 @@ import json
 import pyttsx3
 import speech_recognition as sr
 import re
-
+import threading
+import time
 
 API_KEY = 't1ywmWwxsgye'
 PROJECT_TOKEN = 'txQEkWHXQt6o'
@@ -16,11 +17,12 @@ class Data:
 		self.params = {
 			'api_key': self.api_key
 		}
-		self.get_data()
+		self.data = self.get_data()
 
 	def get_data(self):
-		response = requests.get(f'https://www.parsehub.com/api/v2/projects/{PROJECT_TOKEN}/last_ready_run/data', params={'api_key': API_KEY})
-		self.data = json.loads(response.text)
+		response = requests.get(f'https://www.parsehub.com/api/v2/projects/{self.project_token}/last_ready_run/data', params=self.params)
+		data = json.loads(response.text)
+		return data
 
 	def get_total_cases(self):
 		data = self.data['total']
@@ -54,7 +56,25 @@ class Data:
 # data=Data(API_KEY, PROJECT_TOKEN)
 # print(data.get_total_cases())
 
-	
+
+	def update_data(self):
+		response = requests.post(f'https://www.parsehub.com/api/v2/projects/{self.project_token}/run', params=self.params)
+
+		def poll():
+			time.sleep(0.1)
+			old_data = self.data
+			while True:
+				new_data = self.get_data()
+				if new_data != old_data:
+					self.data = new_data
+					print("Data updated")
+					break
+				time.sleep(5)
+
+
+		t = threading.Thread(target=poll)
+		t.start()
+
 def speak(text):
 	engine=pyttsx3.init()
 	engine.say(text)
@@ -84,7 +104,7 @@ def main():
 
 	TOTAL_PATTERNS={
 					re.compile('[\w\s]+ total [\w\s]+ cases'): data.get_total_cases,	
-					re.compile('weronika'): data.get_total_cases,
+					re.compile('pablo'): data.get_total_cases,
 					re.compile('[\w\s]+ total [\w\s]+ deaths'): data.get_total_deaths,
 					re.compile('[\w\s]+ total deaths'): data.get_total_deaths
 					}
@@ -93,6 +113,7 @@ def main():
 					re.compile("country+"): lambda country: data.get_country_data(country)['total_cases'], # lambda bierze jedną zmienną z countries
                     re.compile("[\w\s]+ deaths [\w\s]+"): lambda country: data.get_country_data(country)['total_deaths'],
 					 }
+	UPDATE_COMMAND="update"
 
 	while True:
 		print("Listening...")
@@ -113,6 +134,10 @@ def main():
 			if pattern.match(text):
 				result = func()
 				break
+
+		if text == UPDATE_COMMAND:
+			result = "Data is being updated. This may take a moment."
+			data.update_data()
 
 		if result:
 			speak(result)
