@@ -17,9 +17,10 @@ I want get information about deaths, infected and cured in my and other countrie
 * Python
   * speech_recognition
   * pyttsx3
-
 ## Setup
-You need to
+You need to have python3 installed. In project folder: 
+* `pip3 install -r requirements.txt`
+* `'python run' in youre terminal`
 
 
 ## Features
